@@ -1,0 +1,41 @@
+Name: Saljooq Altaf
+Net ID: saltaf
+
+
+Assignment 1.08
+
+commit 6c33d035a04d898719715ad997acef1b8ae413ca
+Author: Saljooq <altaf.saljooq@outlook.com>
+Date:   Fri Apr 9 04:31:14 2021 -0500
+
+    Added the objects, fixed the color, updated names to appear alongside monsters list, also, all the picked objects are ineligible to be used
+
+commit 1acb08bd0922f49dfb3410747af257ffb1780aa4
+Author: Saljooq <altaf.saljooq@outlook.com>
+Date:   Thu Apr 8 21:41:35 2021 -0500
+
+    instantiation of monsters with description completed, along with permanent death of uniq monsters and their respective coloring
+
+commit de7847f7cf3ba1cf48299555109beb1b6337a229
+Author: Saljooq <altaf.saljooq@outlook.com>
+Date:   Thu Apr 8 01:23:46 2021 -0500
+
+    Tested colors, initialised the basic pairs and the colors system - pc is red for now and objects are black while backgroud is black - still have to load the players and objects
+
+commit 7d385e6a3040b36788e399952eb3055571e88bbd
+Author: Saljooq <altaf.saljooq@outlook.com>
+Date:   Wed Apr 7 00:31:50 2021 -0500
+
+    added roll_dice method that takes an int array and returns an int
+
+commit 1055b45c23345e8185212db0893cadaa7898c634
+Author: Saljooq <altaf.saljooq@outlook.com>
+Date:   Tue Apr 6 23:22:46 2021 -0500
+
+    Managed to create an object_desc_parser along with print methods - sufficient testing complete
+
+commit 29b9698bed5db1cd926e0dc1dd96c18e7a9eb7f1
+Author: Saljooq <75107181+Saljooq@users.noreply.github.com>
+Date:   Wed Apr 7 00:20:39 2021 -0400
+
+    Initial commit
