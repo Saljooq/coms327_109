@@ -172,6 +172,10 @@ public:
 	int index;
 };
 
+int equipment_worn = 0;
+int ifRing2 = 0;
+vector<obj_node *>inventory;
+int weaponInventory();
 int description_controller(PC* pc, int& x, int& y);
 
 char getObjChar(int type);
@@ -1780,8 +1784,12 @@ int next_move(player_node *pn, PC* pc, int* ifend, player_node_heap* h)
 			if(grid_objects[nextx][nexty]!=NULL)
 			{
 				//do dosomething
-				object_death[grid_objects[nextx][nexty]->index] = 1;
-				grid_objects[nextx][nexty] = NULL;
+				if (inventory.size() < 10)
+				{
+					inventory.push_back(grid_objects[nextx][nexty]);
+					object_death[grid_objects[nextx][nexty]->index] = 1;
+					grid_objects[nextx][nexty] = NULL;
+				}
 			}
 
 			grid_players[pn->pc->x][pn->pc->y] = NULL;
@@ -2111,6 +2119,15 @@ int getkey(int prevx,int prevy, int *x,int *y, int *endif, player_node_heap* h)
 		{
 			*endif=15;
 		}
+	}
+	else if (ch=='i')
+	{
+		weaponInventory();
+		player_node* current = (h->head);
+		while (!(current->ifPC)) current=current->next;
+		print_dungeon_limited(current->pc);
+		for (i = 0; i < xlenMax; i++) mvaddch(0,i,' ');
+		goto start;
 	}
 
 	//else if (ch=='q') endwin();
@@ -3325,6 +3342,93 @@ int description_controller(PC* pc, int& x, int& y)
 			mvaddch(0,j,' ');
 		}
 		print_dungeon_limited(pc);
+		return 0;
+	}
+	else goto start;
+
+}
+
+
+
+/*View all the items that the PC holds with this method*/
+int weaponInventory()
+{
+	int i, j, line;
+	start:
+	line = 0;
+	for (i = 0; i < ylenMax+1; i++)
+	{
+		for (j = 0; j< xlenMax; j++)
+		{
+			mvaddch(i,j,' ');
+		}
+	}
+	string d = "Press ESC or 'b' to go back.";
+	for (int cursor = 0; d[cursor]!='.'; cursor++) mvaddch(line, cursor, d[cursor]);
+	line+=2;
+	d = "WEAPONS LIST.";
+	for (int cursor = 0; d[cursor]!='.'; cursor++) mvaddch(line, cursor, d[cursor]);
+	line++;
+
+
+
+	for (i = 0; i < inventory.size(); i++){
+		int cursor;
+		d = inventory[i]->d->name;
+		mvaddch(line, 4, i+'0');
+		for (cursor = 0; cursor < d.size(); cursor++) mvaddch(line, cursor+6, d[cursor]);
+		cursor+=9;
+		d = "TYPE:.";
+		for (j = 0; d[j]!='.'; j++) mvaddch(line, cursor+j, d[j]);
+		cursor+= j+1;
+		d = int_to_objtype(inventory[i]->d->type);
+		for (j = 0; j<d.size(); j++) mvaddch(line, cursor+j, d[j]);
+		cursor+= j+3;
+		d = "DAM:.";
+		for (j = 0; d[j]!='.'; j++) mvaddch(line, cursor+j, d[j]);
+		cursor+= j+1;
+		d = to_string(inventory[i]->d->dam[0])+"+";
+		d = d + to_string(inventory[i]->d->dam[1]) + "d";
+		d = d + to_string(inventory[i]->d->dam[2]);
+		for (j = 0; j<d.size(); j++) mvaddch(line, cursor+j, d[j]);
+		cursor+= j+3;
+		line++;
+	}
+
+
+
+	chtype ch = getch();
+	if ((ch == 27) || (ch=='b'))
+	{
+		return 0;
+	}
+	else goto start;
+}
+
+
+/*View all the items that the PC is eqipped with this method*/
+int viewEquipment()
+{
+	int i, j, line;
+	start:
+	line = 0;
+	for (i = 0; i < ylenMax+1; i++)
+	{
+		for (j = 0; j< xlenMax; j++)
+		{
+			mvaddch(i,j,' ');
+		}
+	}
+	string d = "Press ESC or 'b' to go back.";
+	for (int cursor = 0; d[cursor]!='.'; cursor++) mvaddch(line, cursor, d[cursor]);
+	line+=2;
+	d = "EQUIPMENT.";
+	for (int cursor = 0; d[cursor]!='.'; cursor++) mvaddch(line, cursor, d[cursor]);
+	line++;
+
+	chtype ch = getch();
+	if ((ch == 27) || (ch=='b'))
+	{
 		return 0;
 	}
 	else goto start;
