@@ -172,8 +172,12 @@ public:
 	int index;
 };
 
-int equipment_worn = 0;
-int ifRing2 = 0;
+int wearThis(obj_node *o);
+int selectInventory();
+int viewEquipment();
+int eq_vector = 0;
+int ring2 = 0;
+vector<obj_node *>equipped;
 vector<obj_node *>inventory;
 int weaponInventory();
 int description_controller(PC* pc, int& x, int& y);
@@ -610,6 +614,7 @@ int main(int argc, char* argv[])
 	for (i = 0; i < monsters.size(); i++) monster_used.push_back(0);
 	for (i = 0; i < odesc.size(); i++) object_death.push_back(0);
 	for (i = 0; i < odesc.size(); i++) object_used.push_back(0);
+	for (i = 0; i < 12; i++) equipped.push_back(NULL);
 
 	//here we get the argument for the number of monsters
 	j = 0;
@@ -1187,22 +1192,36 @@ int print_teleport(PC* pc, int* x, int* y)
 		{
 			for (j = Xmin; j <= Xmax; j++)
 			{
-				if (grid_players[j][i]==NULL) mvaddch( i+offset,j, grid[j][i]);
+				if (grid_players[j][i]==NULL)
+				{
+					if (grid_objects[j][i]==NULL)
+					{
+						attron(COLOR_PAIR(COLOR_WHITE));
+						mvaddch( i+offset,j, grid[j][i]);
+					}
+					else {
+						attron(COLOR_PAIR(grid_objects[j][i]->d->color[0]));
+						mvaddch( i+offset,j, getObjChar(grid_objects[j][i]->d->type));
+					}
+				}
 				else
 				{
 					if (grid_players[j][i]->ifPC==1) mvaddch(i+offset,j, '@');//printf("@");
 					else
 					{
 						//char* store = sprintf("%x",(grid_players[j][i]->npc->character));
-						int npc = grid_players[j][i]->npc->character;
-						if (npc <= 9){
-						npc2=npc+'0';
-						mvaddch(i+offset,j, npc2);
-						}
-						else{
-							npc2 = npc+'a'-10;
-							mvaddch(i+offset,j, npc2);
-						}
+						// int npc = grid_players[j][i]->npc->character;
+						// if (npc <= 9){
+						// npc2=npc+'0';
+						// mvaddch(i+offset,j, npc2);
+						// }
+						// else{
+						// 	npc2 = npc+'a'-10;
+						// 	mvaddch(i+offset,j, npc2);
+						// }
+						char npc = grid_players[j][i]->npc->desc->symb;
+						attron(COLOR_PAIR(grid_players[j][i]->npc->desc->color[0]));
+						mvaddch(i+offset,j, npc);
 					}
 				}
 			}
@@ -2120,15 +2139,28 @@ int getkey(int prevx,int prevy, int *x,int *y, int *endif, player_node_heap* h)
 			*endif=15;
 		}
 	}
-	else if (ch=='i')
+	else if (ch=='i'||ch=='w'||ch=='e')
 	{
-		weaponInventory();
+		if 	(ch == 'w') 		selectInventory();
+		else if (ch == 'i') 		selectInventory();//weaponInventory();
+		else if (ch == 'e')		viewEquipment();
+
 		player_node* current = (h->head);
 		while (!(current->ifPC)) current=current->next;
 		print_dungeon_limited(current->pc);
+
 		for (i = 0; i < xlenMax; i++) mvaddch(0,i,' ');
 		goto start;
 	}
+	// else if (ch=='e')
+	// {
+	// 	viewEquipment();
+	// 	player_node* current = (h->head);
+	// 	while (!(current->ifPC)) current=current->next;
+	// 	print_dungeon_limited(current->pc);
+	// 	for (i = 0; i < xlenMax; i++) mvaddch(0,i,' ');
+	// 	goto start;
+	// }
 
 	//else if (ch=='q') endwin();
 	//game(y, x);
@@ -3272,7 +3304,11 @@ int description_controller(PC* pc, int& x, int& y)
 					int j = 0;
 					int k = 0;
 
-					string d = "NAME   .";
+					string d = "Press ESC to go back.";
+					for (i = 0; d[i]!='.'; i++) mvaddch(k, i, d[i]);
+					k+=2;
+
+					d = "NAME   .";
 					for (i = 0; d[i]!='.'; i++) mvaddch(k, i, d[i]);
 					d = grid_players[x][y]->npc->desc->name;
 					for (j = 0; j < d.size(); j++) mvaddch(k, i++, d[j]);
@@ -3292,7 +3328,7 @@ int description_controller(PC* pc, int& x, int& y)
 					for (j = 0; j < d.size(); j++) mvaddch(k, i++, d[j]);
 					k++;
 					//HP, speed, DAM
-					d = "SPEED   .";
+					d = "DAMAGE   .";
 					for (i = 0; d[i]!='.'; i++) mvaddch(k, i, d[i]);
 					d = to_string(grid_players[x][y]->npc->desc->dam[0])+"+";
 					d = d + to_string(grid_players[x][y]->npc->desc->dam[1]) + "d";
@@ -3313,7 +3349,7 @@ int description_controller(PC* pc, int& x, int& y)
 							j++;
 							i = 0;
 						}
-						if (j==ylenMax) break;
+						if (j==ylenMax-8) break;
 						mvaddch(8+j, 0+i, description[k]);
 						k++;
 						i++;
@@ -3411,6 +3447,7 @@ int viewEquipment()
 {
 	int i, j, line;
 	start:
+	int typeID = 1;
 	line = 0;
 	for (i = 0; i < ylenMax+1; i++)
 	{
@@ -3426,6 +3463,44 @@ int viewEquipment()
 	for (int cursor = 0; d[cursor]!='.'; cursor++) mvaddch(line, cursor, d[cursor]);
 	line++;
 
+	for (i = 0; i < equipped.size(); i++){
+		int cursor;
+		mvaddch(line, 4, i+'a');
+		cursor = 6;
+
+		d= int_to_objtype(typeID);
+		if (i==11) d = int_to_objtype(RING);
+		for (j = 0; j<d.size(); j++) mvaddch(line, cursor+j, d[j]);
+		cursor+=j+3;
+
+		typeID*=2;
+		if (equipped[i]==NULL)
+		{
+			line++;
+			continue;
+		}
+		d = equipped[i]->d->name;
+		for (j = 0; j < d.size(); j++) mvaddch(line, cursor+j, d[j]);
+		cursor+=j+3;
+		//USE THIS FOR SPEED
+		// d = "TYPE:.";
+		// for (j = 0; d[j]!='.'; j++) mvaddch(line, cursor+j, d[j]);
+		// cursor+= j+1;
+		// d = int_to_objtype(equipped[i]->d->type);
+		// for (j = 0; j<d.size(); j++) mvaddch(line, cursor+j, d[j]);
+		// cursor+= j+3;
+		d = "DAM:.";
+		for (j = 0; d[j]!='.'; j++) mvaddch(line, cursor+j, d[j]);
+		cursor+= j+1;
+		d = to_string(equipped[i]->d->dam[0])+"+";
+		d = d + to_string(equipped[i]->d->dam[1]) + "d";
+		d = d + to_string(equipped[i]->d->dam[2]);
+		for (j = 0; j<d.size(); j++) mvaddch(line, cursor+j, d[j]);
+		cursor+= j+3;
+		line++;
+	}
+
+
 	chtype ch = getch();
 	if ((ch == 27) || (ch=='b'))
 	{
@@ -3433,4 +3508,142 @@ int viewEquipment()
 	}
 	else goto start;
 
+}
+/*SELECT AN ITEM FROM THE WEAPONS INVENTORY*/
+int selectInventory()
+{
+	int warning = 0;
+	int i, j, line, k;
+	k = 0;
+	start:
+	line = 0;
+	for (i = 0; i < ylenMax+1; i++)
+	{
+		for (j = 0; j< xlenMax; j++)
+		{
+			mvaddch(i,j,' ');
+		}
+	}
+	string d = "Press ESC/b to esc, UP/DOWN to navigate, w to wear, d to drop, x to expunge.";
+	for (int cursor = 0; d[cursor]!='.'; cursor++) mvaddch(line, cursor, d[cursor]);
+	if (warning!=0)
+	{
+		string d = "CANNOT WEAR THIS WEAPON                                                        .";
+		for (int cursor = 0; d[cursor]!='.'; cursor++) mvaddch(line, cursor, d[cursor]);
+		warning = 0;
+	}
+	line+=2;
+	d = "WEAPONS LIST.";
+	for (int cursor = 0; d[cursor]!='.'; cursor++) mvaddch(line, cursor, d[cursor]);
+	line++;
+
+
+	for (i = 0; i < inventory.size(); i++){
+		if (i == k)
+		{
+			d = "-->.";
+			for (j = 0; d[j]!='.'; j++) mvaddch(line, j, d[j]);
+		}
+		int cursor;
+		d = inventory[i]->d->name;
+		mvaddch(line, 4, i+'0');
+		for (cursor = 0; cursor < d.size(); cursor++) mvaddch(line, cursor+6, d[cursor]);
+		cursor+=9;
+		d = "TYPE:.";
+		for (j = 0; d[j]!='.'; j++) mvaddch(line, cursor+j, d[j]);
+		cursor+= j+1;
+		d = int_to_objtype(inventory[i]->d->type);
+		for (j = 0; j<d.size(); j++) mvaddch(line, cursor+j, d[j]);
+		cursor+= j+3;
+		d = "DAM:.";
+		for (j = 0; d[j]!='.'; j++) mvaddch(line, cursor+j, d[j]);
+		cursor+= j+1;
+		d = to_string(inventory[i]->d->dam[0])+"+";
+		d = d + to_string(inventory[i]->d->dam[1]) + "d";
+		d = d + to_string(inventory[i]->d->dam[2]);
+		for (j = 0; j<d.size(); j++) mvaddch(line, cursor+j, d[j]);
+		cursor+= j+3;
+		line++;
+	}
+
+
+
+	chtype ch = getch();
+	if ((ch == 27) || (ch=='b'))//if ESC key
+	{
+		return 0;
+	}
+	else if (ch == 259) //if UP key
+	{
+		if (k > 0) k--;
+		else {
+			k--;
+			k+=inventory.size();
+		}
+		goto start;
+	}
+	else if (ch == 258) //if DOWN key
+	{
+		if (k < inventory.size()-1) k++;
+		else{
+			k++;
+			k-=inventory.size();
+		}
+		goto start;
+	}
+	else if (ch == 'w') //if DOWN key
+	{
+		//equipped.push_back(inventory[k]);
+		if (wearThis(inventory[k])==0){
+		inventory.erase(inventory.begin()+k);}
+		else warning=1;
+		goto start;
+	}
+
+	else goto start;
+}
+/*This method will check if theres a slot available for a particular */
+int wearThis(obj_node *o)
+{
+	int type = o->d->type;
+	if (type==(type&(SCROLL-1)))//this checks if theres even a slot for this type in the equipment pack
+	{
+		int j = 1;
+		for (int i = 0; i < 11; i++)
+		{
+			if (j==type)
+			{
+				if (type==(type&eq_vector))
+				{
+					if (type!=RING) return 1;//its already occupied, unless its ring with two slots
+					else{
+						if (ring2==1) return 1;
+						else
+						{
+							ring2 = 1;
+							equipped[11] = o;
+							return 0;
+						}
+					}
+				}
+				else
+				{
+					equipped[i] = o;
+					eq_vector+=type;
+					return 0;
+				}
+				// if (type==RING){
+				// 	if (ring2==1) return 1;
+				// 	else{
+				// 		ring2 = 1;
+				// 		equipped[11] = o;
+				// 		return 0;
+				// 	}
+				// }
+			}
+			j*=2;
+		}
+	}
+	else return 2;//no slots for weapon of this type
+	return 0;
 }
