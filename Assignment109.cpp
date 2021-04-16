@@ -92,6 +92,9 @@ public:
 /*This struct will contain all the data we will need for pc*/
 class PC{
 public:
+	int dam[3];
+	int totDam;
+	int hp;
 	int speed;
 	int x;
 	int y;
@@ -172,6 +175,7 @@ public:
 	int index;
 };
 
+int readyPC();
 int wearThis(obj_node *o);
 int selectInventory();
 int viewEquipment();
@@ -629,7 +633,7 @@ int main(int argc, char* argv[])
 	}
 
 	if (j) j = atoi(argv[i+1]);
-	else j = 10;
+	else j = 20;
 	//processing for nummon tags beings here
 	//cout<<"getting num of mons "<<j<<endl;
 	//cout<<"total desc "<<monsters.size()<<endl;
@@ -687,8 +691,9 @@ int main(int argc, char* argv[])
 		usleep(2000000);
 		print_end(0);//printf("\n\n\n\n\n\n\n\n\n\n\n\nPC LOST\n\n\n\n\n\n\n\n");
 	}
-	else if (i==3)print_end(1);//printf("\n\n\n\n\n\n\n\n\n\n\n\nPC WON\n\n\n\n\n\n\n\n");
+	//else if (i==3)print_end(1);//printf("\n\n\n\n\n\n\n\n\n\n\n\nPC WON\n\n\n\n\n\n\n\n");
 	else if (i==5) print_end(5);///prints quit
+	else if (i==4) print_end(1);//printf("\n\n\n\n\n\n\n\n\n\n\n\nPC WON\n\n\n\n\n\n\n\n");
 
 	endwin();
 
@@ -714,6 +719,8 @@ int main(int argc, char* argv[])
 	monsters.clear();
 	odesc.clear();
 
+	equipped.clear();
+	inventory.clear();
 
 
 	//Now we check to see if there's a save switch to update the /.rlg327/dungeon
@@ -1541,7 +1548,11 @@ int initialize_pc(PC** pc)
 
 	(*pc)->x = k;
 	(*pc)->y = j;
-
+	(*pc)->hp = 2000;
+	(*pc)->totDam = 0;
+	(*pc)->dam[0] = 0;
+	(*pc)->dam[1] = 1;
+	(*pc)->dam[2] = 4;
 	(*pc)->speed = 10;
 
 
@@ -1697,7 +1708,7 @@ int pop_player(player_node_heap* nh, int* ifend, player_node** output)
 	}
 	if(p->next==NULL)
 	{
-		*ifend = 3;
+		//*ifend = 3;
 		return 0;
 	}
 	int min_turn = p->next_turn;
@@ -1796,31 +1807,55 @@ int next_move(player_node *pn, PC* pc, int* ifend, player_node_heap* h)
 
 		if ( (pn->pc->x!=nextx) || (pn->pc->y!=nexty) )
 		{
+			int killed = 1;
 			if(grid_players[nextx][nexty]!=NULL)
 			{
-				kill_player(grid_players[nextx][nexty], h);
-			}
-			if(grid_objects[nextx][nexty]!=NULL)
-			{
-				//do dosomething
-				if (inventory.size() < 10)
+				//kill_player(grid_players[nextx][nexty], h);
+				readyPC();
+				PC* p = pn->pc;
+				NPC* n = grid_players[nextx][nexty]->npc;
+				//kill_player(grid_players[nextx][nexty], h);
+				//engaging in a battle
+				n->hp -= p->totDam;
+				if (n->hp < 0)
 				{
-					inventory.push_back(grid_objects[nextx][nexty]);
-					object_death[grid_objects[nextx][nexty]->index] = 1;
-					grid_objects[nextx][nexty] = NULL;
+					if((n->character) & BOSS) *ifend = 4;
+					kill_player(grid_players[nextx][nexty], h);
+
 				}
+				else
+				{
+					nextx = p->x;
+					nexty = p->y;
+					killed = 0;
+				}
+
 			}
-
-			grid_players[pn->pc->x][pn->pc->y] = NULL;
-			pn->pc->x = nextx;
-			pn->pc->y = nexty;
-			grid_players[pn->pc->x][pn->pc->y] = pn;
-
-			//wall check
-			if (grid[pn->pc->x][pn->pc->y] == ' ')
+			if (killed)
 			{
-				grid[pn->pc->x][pn->pc->y] = '#';
-				hardness[pn->pc->x][pn->pc->y] = 0;
+				if(grid_objects[nextx][nexty]!=NULL)
+				{
+					//do dosomething
+					if (inventory.size() < 10)
+					{
+						inventory.push_back(grid_objects[nextx][nexty]);
+						object_death[grid_objects[nextx][nexty]->index] = 1;
+						grid_objects[nextx][nexty] = NULL;
+					}
+				}
+
+				grid_players[pn->pc->x][pn->pc->y] = NULL;
+				pn->pc->x = nextx;
+				pn->pc->y = nexty;
+				grid_players[pn->pc->x][pn->pc->y] = pn;
+
+
+				//wall check
+				if (grid[pn->pc->x][pn->pc->y] == ' ')
+				{
+					grid[pn->pc->x][pn->pc->y] = '#';
+					hardness[pn->pc->x][pn->pc->y] = 0;
+				}
 			}
 
 		}
@@ -1987,13 +2022,47 @@ int next_move(player_node *pn, PC* pc, int* ifend, player_node_heap* h)
 	}
 	else if (nextx!=x || nexty!=y)//we kill someone
 	{
-		if (grid_players[nextx][nexty]->ifPC==1) *ifend = 2;
-		kill_player(grid_players[nextx][nexty], h);
-		//player_node* temp = grid_players[x][y];
-		grid_players[x][y] = NULL;
-		pn->npc->x = nextx;
-		pn->npc->y = nexty;
-		grid_players[nextx][nexty] = pn;
+		if (grid_players[nextx][nexty]->ifPC==1)//we kill PC
+		{
+			// *ifend = 2;
+			// kill_player(grid_players[nextx][nexty], h);
+			// //player_node* temp = grid_players[x][y];
+			// grid_players[x][y] = NULL;
+			// pn->npc->x = nextx;
+			// pn->npc->y = nexty;
+			// grid_players[nextx][nexty] = pn;
+
+
+			readyPC();
+			PC* p = grid_players[nextx][nexty]->pc;
+			NPC* n = pn->npc;
+			//engaging in a battle
+			p->hp -= roll_dice(n->desc->dam);
+			if (p->hp < 0){
+				*ifend = 2;
+				kill_player(grid_players[nextx][nexty], h);
+				grid_players[x][y] = NULL;
+				n->x = nextx;
+				n->y = nexty;
+				grid_players[nextx][nexty] = pn;
+			}
+			else{
+				//nothing, everyone stays where they are
+			}
+
+
+		}
+		else//we kill non-pc
+		{
+			//kill_player(grid_players[nextx][nexty], h);
+			player_node* temp = grid_players[nextx][nexty];
+			grid_players[x][y] = temp;
+			temp->npc->x = x;
+			temp->npc->y = y;
+			pn->npc->x = nextx;
+			pn->npc->y = nexty;
+			grid_players[nextx][nexty] = pn;
+		}
 	}
 
 	pn->next_turn += (1000/(pn->npc->speed));
@@ -2619,7 +2688,7 @@ int parseMonstersDesc()
 						while (!stream.eof())
 						{
 							stream>>t;
-							m.abil += get_abilities(t);
+							m.abil = m.abil | get_abilities(t);
 						}
 
 					}
@@ -3385,7 +3454,7 @@ int description_controller(PC* pc, int& x, int& y)
 
 
 
-/*View all the items that the PC holds with this method*/
+/*View all the items that the PC holds in the inventory with this method*/
 int weaponInventory()
 {
 	int i, j, line;
@@ -3622,20 +3691,32 @@ int selectInventory()
 		mvaddch(line, 4, i+'0');
 		for (cursor = 0; cursor < d.size(); cursor++) mvaddch(line, cursor+6, d[cursor]);
 		cursor+=9;
+		if (cursor < 30) cursor = 30;
 		d = "TYPE:.";
 		for (j = 0; d[j]!='.'; j++) mvaddch(line, cursor+j, d[j]);
-		cursor+= j+1;
+		cursor+= j;
 		d = int_to_objtype(inventory[i]->d->type);
 		for (j = 0; j<d.size(); j++) mvaddch(line, cursor+j, d[j]);
-		cursor+= j+3;
+		cursor+= j+2;
+		if (cursor < 42) cursor = 42;
 		d = "DAM:.";
 		for (j = 0; d[j]!='.'; j++) mvaddch(line, cursor+j, d[j]);
-		cursor+= j+1;
+		cursor+= j;
 		d = to_string(inventory[i]->d->dam[0])+"+";
 		d = d + to_string(inventory[i]->d->dam[1]) + "d";
 		d = d + to_string(inventory[i]->d->dam[2]);
 		for (j = 0; j<d.size(); j++) mvaddch(line, cursor+j, d[j]);
-		cursor+= j+3;
+		cursor+= j+2;
+
+		if (cursor < 52) cursor = 52;
+		d = "SPEED:.";
+		for (j = 0; d[j]!='.'; j++) mvaddch(line, cursor+j, d[j]);
+		cursor+= j;
+		d = to_string(inventory[i]->d->speed[0])+"+";
+		d = d + to_string(inventory[i]->d->speed[1]) + "d";
+		d = d + to_string(inventory[i]->d->speed[2]);
+		for (j = 0; j<d.size(); j++) mvaddch(line, cursor+j, d[j]);
+		cursor+= j+2;
 		line++;
 	}
 	if (inventory.size()>0)
@@ -3736,6 +3817,7 @@ int selectInventory()
 									k--;
 									if (k<0) k = 0;
 								}
+								goto start;
 
 							}
 						}
@@ -3796,4 +3878,34 @@ int wearThis(obj_node *o)
 	}
 	else return 2;//no slots for weapon of this type
 	return 0;
+}
+
+int readyPC()
+{
+	PC* p = NULL;
+	for (int i = 0; i < ylenMax; i++)
+	{
+		for (int j = 0; j < xlenMax; j++)
+		{
+			if(grid_players[j][i]!=NULL)
+			{
+				if(grid_players[j][i]->ifPC==1) p = grid_players[j][i]->pc;
+			}
+		}
+	}
+
+	if (p!=NULL)
+	{
+		p->totDam = roll_dice(p->dam);
+		p->speed = 10;
+		//int roll_dice(int* d);
+		for (int i = 0; i < equipped.size(); i++)
+		{
+			if (equipped[i]!=NULL){
+				p->totDam += roll_dice(equipped[i]->d->dam);
+				p->speed += roll_dice(equipped[i]->d->speed);
+			}
+		}
+	}
+	 return 0;
 }

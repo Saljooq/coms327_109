@@ -2,40 +2,35 @@ Name: Saljooq Altaf
 Net ID: saltaf
 
 
-Assignment 1.08
+Assignment 1.09
 
-commit 6c33d035a04d898719715ad997acef1b8ae413ca
+
+commit 7bce6027a9d3e8530acb5eae40b2f9967f4d2bf5
 Author: Saljooq <altaf.saljooq@outlook.com>
-Date:   Fri Apr 9 04:31:14 2021 -0500
+Date:   Thu Apr 15 21:48:56 2021 -0500
 
-    Added the objects, fixed the color, updated names to appear alongside monsters list, also, all the picked objects are ineligible to be used
+    menu tests completed, all functionalities integrated
 
-commit 1acb08bd0922f49dfb3410747af257ffb1780aa4
+commit 3092702c88564734752e5fb4d53142bee4b37b3a
 Author: Saljooq <altaf.saljooq@outlook.com>
-Date:   Thu Apr 8 21:41:35 2021 -0500
+Date:   Thu Apr 15 18:40:24 2021 -0500
 
-    instantiation of monsters with description completed, along with permanent death of uniq monsters and their respective coloring
+    Both the menu's added with ability to filter for items already equipped, full functionality of menu still pending
 
-commit de7847f7cf3ba1cf48299555109beb1b6337a229
+commit 89618c078343ea5970bbe95ee67da17e1bfd16e9
 Author: Saljooq <altaf.saljooq@outlook.com>
-Date:   Thu Apr 8 01:23:46 2021 -0500
+Date:   Thu Apr 15 02:46:24 2021 -0500
 
-    Tested colors, initialised the basic pairs and the colors system - pc is red for now and objects are black while backgroud is black - still have to load the players and objects
+    prototype of equipment list prepared, view of inventory completed
 
-commit 7d385e6a3040b36788e399952eb3055571e88bbd
+commit edc30387a3f8ba05cf6454ca12121e0fe53004e2
 Author: Saljooq <altaf.saljooq@outlook.com>
-Date:   Wed Apr 7 00:31:50 2021 -0500
+Date:   Wed Apr 14 01:39:37 2021 -0500
 
-    added roll_dice method that takes an int array and returns an int
+    Added ability to see name,description,hp,dam,speed of Monsters by 'L' and 't' and leave by ESC
 
-commit 1055b45c23345e8185212db0893cadaa7898c634
-Author: Saljooq <altaf.saljooq@outlook.com>
-Date:   Tue Apr 6 23:22:46 2021 -0500
-
-    Managed to create an object_desc_parser along with print methods - sufficient testing complete
-
-commit 29b9698bed5db1cd926e0dc1dd96c18e7a9eb7f1
+commit f678258dd5b312de8581e753efd5a83ba58312ac
 Author: Saljooq <75107181+Saljooq@users.noreply.github.com>
-Date:   Wed Apr 7 00:20:39 2021 -0400
+Date:   Wed Apr 14 03:12:45 2021 -0400
 
     Initial commit

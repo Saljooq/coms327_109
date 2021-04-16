@@ -1,8 +1,8 @@
-Assignment108: Assignment108.cpp
-	g++ Assignment108.cpp -lcurses -o Assignment108
+Assignment109: Assignment109.cpp
+	g++ Assignment109.cpp -lcurses -o Assignment109
 
-debug: Assignment108.cpp
-	g++ Assignment108.cpp -o Assignment108 -lcurses -g
+debug: Assignment109.cpp
+	g++ Assignment109.cpp -o Assignment109 -lcurses -g
 
 clean:
-	rm -f Assignment108
+	rm -f Assignment109

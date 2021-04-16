@@ -2,28 +2,39 @@ Name: Saljooq Altaf
 Net ID: saltaf
 
 
-Assignment 1.08
+Assignment 1.09
 
 
-This is a continuation of 1.01-1.07.
+This is a continuation of 1.01-1.08.
 
-There are 6 new vectors used in this implementation.
-2 are to store object(odesc) and monster description (monsters)
-2 are to keep a tab of which one are used. (They're all reset when we go to a new random dungeon)
-2 are used to keep tab of which of the monsters and objects will never be revitalised in any version of the game (uniq monsters that died or weapon that was picked up)
+New functions:
+1/int readyPC(); - this is a helper method that rolls all the needed dice (upto 12 equipment and the PC's dice)
+and update the relevent attributes(speed, totDam, hp) before any move made on or from PC.
+2/int wearThis(obj_node *o); - this is a helper method that sifts through a bit vector to see if slots are available to wear equipment.
+3/int selectInventory(); - this is used to create an inventory menu
+4/int viewEquipment(); - this creates a menu of all the equipment pc is wearing
+5/int weaponInventory(); - this is a method used for initial testing of menu, no longer used by the program.
+6/int description_controller(PC* pc, int& x, int& y); - this will allow us to see description of monsters (by pressing t)
 
-This program has an object_parser and find_dice implemented. Also, most of the functions previously used
-to instantiate the npc with random variables now used the parsed data in the
-monster_description vector (called monsters).
+The menu's have been successfully integrated into the new update.
+There are two essential menu's:
+1/ Equipment menu - This menu appears when t or e is pressed.
+This is implemented viewEquipment() method.
+This allows us to view all 12 slots -alongside their types (e functionality) - the second
+ring is listed at the end. Pressing up/down helps navigate and 't' helps take off item (t functionality).
+2/ Inventory menu. This menu appears when w,d,x,i or I is pressed.
+This is implemented using viewEquipment method.
+This allows us to view up to ten objects that we've gathered. (i functionality)
+As we press up and down to navigate, description of the items appears at the bottom.(I functionality)
+Similarly, pressing d while an item is selected makes the pc drop the item on the floor, given there isn't one already. (d functionality)
+Pressing x will delete (expunge) this item permanently. (x functionality)
+Pressing w will help pc wear an item if slots available, else it shows an error on top (w functionality).
 
-These are the new procedures:
-char getObjChar(int type) - takes a type int of objects and returns the respective character (if no match, it gets '*').
-int populate_dungeon_objects() - This empties the dungeon of any objects and finds spot with room and no existing object and no pc to place the object
-int findMonster() - finds an index of monster in vector of monster description as per the specs
-int findObj() - finds an index of obj in vector of object description as per the specs
-int roll_dice(int* d) - this outputs an int from an array of 3 ints.
-int parseObjDesc() - this was implemented to load the text file onto the monsters description vector.
 
-Additionally, print methods have been updated to use colors in the description.
-The monster list also has colors of the respective monsters when rendering their symbol.
-Also, monster list should list names of all the monsters (or the first 18 characters).
+
+There is a new controller (description controller) added to this game, that helps see npc details.
+This can be activate by 'L', move the * to select a monster and press t to see description. Press Esc to go back to controller.
+Remember to press ESC to go back to the game.
+
+
+This game should only end if the BOSS (spongebob squarepants) is killed.
