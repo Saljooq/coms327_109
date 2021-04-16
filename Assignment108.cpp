@@ -2139,11 +2139,10 @@ int getkey(int prevx,int prevy, int *x,int *y, int *endif, player_node_heap* h)
 			*endif=15;
 		}
 	}
-	else if (ch=='i'||ch=='w'||ch=='e')
+	else if (ch=='w'||ch=='t'||ch=='d'||ch=='x'||ch=='i'||ch=='e'||ch=='I')
 	{
-		if 	(ch == 'w') 		selectInventory();
-		else if (ch == 'i') 		selectInventory();//weaponInventory();
-		else if (ch == 'e')		viewEquipment();
+		if 	( (ch == 'w') || (ch == 'd')|| (ch == 'x')|| (ch == 'i')|| (ch == 'I') )		selectInventory();
+		else if ( (ch == 'e') || (ch == 't') )		viewEquipment();//weaponInventory();
 
 		player_node* current = (h->head);
 		while (!(current->ifPC)) current=current->next;
@@ -3445,7 +3444,9 @@ int weaponInventory()
 /*View all the items that the PC is eqipped with this method*/
 int viewEquipment()
 {
-	int i, j, line;
+	int i, j, line, k;
+	k = 0;
+	int warning = 0;
 	start:
 	int typeID = 1;
 	line = 0;
@@ -3456,14 +3457,32 @@ int viewEquipment()
 			mvaddch(i,j,' ');
 		}
 	}
-	string d = "Press ESC or 'b' to go back.";
+	string d = "Press ESC or 'b' to go back, 't' to take off equipment                        .";
 	for (int cursor = 0; d[cursor]!='.'; cursor++) mvaddch(line, cursor, d[cursor]);
+	if (warning == 2)
+	{
+		d = "There doesn't seem to be any space in your inventory                            .";
+		for (int cursor = 0; d[cursor]!='.'; cursor++) mvaddch(line+1, cursor, d[cursor]);
+		warning = 0;
+	}
+	else if (warning ==3)
+	{
+		d = "There isn't anything in this slot                                       .";
+		for (int cursor = 0; d[cursor]!='.'; cursor++) mvaddch(line+1, cursor, d[cursor]);
+		warning = 0;
+	}
 	line+=2;
 	d = "EQUIPMENT.";
 	for (int cursor = 0; d[cursor]!='.'; cursor++) mvaddch(line, cursor, d[cursor]);
 	line++;
 
-	for (i = 0; i < equipped.size(); i++){
+	for (i = 0; i < equipped.size(); i++)
+	{
+		if (i == k)
+		{
+			d = "-->.";
+			for (j = 0; d[j]!='.'; j++) mvaddch(line, j, d[j]);
+		}
 		int cursor;
 		mvaddch(line, 4, i+'a');
 		cursor = 6;
@@ -3483,12 +3502,19 @@ int viewEquipment()
 		for (j = 0; j < d.size(); j++) mvaddch(line, cursor+j, d[j]);
 		cursor+=j+3;
 		//USE THIS FOR SPEED
-		// d = "TYPE:.";
-		// for (j = 0; d[j]!='.'; j++) mvaddch(line, cursor+j, d[j]);
-		// cursor+= j+1;
-		// d = int_to_objtype(equipped[i]->d->type);
-		// for (j = 0; j<d.size(); j++) mvaddch(line, cursor+j, d[j]);
-		// cursor+= j+3;
+		if (cursor < 45) cursor = 45;
+
+		d = "SPEED:.";
+		for (j = 0; d[j]!='.'; j++) mvaddch(line, cursor+j, d[j]);
+		cursor+= j+1;
+		d = to_string(equipped[i]->d->speed[0])+"+";
+		d = d + to_string(equipped[i]->d->speed[1]) + "d";
+		d = d + to_string(equipped[i]->d->speed[2]);
+		for (j = 0; j<d.size(); j++) mvaddch(line, cursor+j, d[j]);
+		cursor+= j+3;
+
+		if (cursor < 55) cursor = 55;
+
 		d = "DAM:.";
 		for (j = 0; d[j]!='.'; j++) mvaddch(line, cursor+j, d[j]);
 		cursor+= j+1;
@@ -3505,6 +3531,53 @@ int viewEquipment()
 	if ((ch == 27) || (ch=='b'))
 	{
 		return 0;
+	}
+	else if (ch == 259) //if UP key
+	{
+		if (k > 0) k--;
+		else {
+			k--;
+			k+=equipped.size();
+		}
+		goto start;
+	}
+	else if (ch == 258) //if DOWN key
+	{
+		if (k < equipped.size()-1) k++;
+		else{
+			k++;
+			k-=equipped.size();
+		}
+		goto start;
+	}
+	else if (ch == 't') //if t is pressed to take off an item
+	{
+		if (inventory.size()==12)
+		{
+			warning = 2;
+			goto start;
+		}
+		else if (equipped[k]==NULL)
+		{
+			warning = 3;
+			goto start;
+		}
+		else
+		{
+			if (k==11){
+				inventory.push_back(equipped[k]);
+				equipped[k] = NULL;
+				ring2 = 0;
+				goto start;
+			}
+			else
+			{
+				inventory.push_back(equipped[k]);
+				eq_vector -= equipped[k]->d->type;
+				equipped[k] = NULL;
+				goto start;
+			}
+		}
 	}
 	else goto start;
 
@@ -3565,7 +3638,28 @@ int selectInventory()
 		cursor+= j+3;
 		line++;
 	}
-
+	if (inventory.size()>0)
+	{
+		d = "DESCRIPTION.";
+		for (j = 0; d[j]!='.'; j++) mvaddch(14, j, d[j]);
+		d = inventory[k]->d->desc;
+		j = 0;
+		i = 15;
+		int cursor = 0;
+		while (1)
+		{
+			if (d[cursor]=='\n')//(i >= 40)
+			{
+				i++;
+				j = 0;
+			}
+			if (i==ylenMax-1) break;
+			mvaddch(i, j, d[cursor]);
+			j++;
+			cursor++;
+			if (cursor==d.size()) break;
+		}
+	}
 
 
 	chtype ch = getch();
@@ -3591,12 +3685,68 @@ int selectInventory()
 		}
 		goto start;
 	}
-	else if (ch == 'w') //if DOWN key
+	else if (ch == 'w') //if we want to wear
 	{
 		//equipped.push_back(inventory[k]);
-		if (wearThis(inventory[k])==0){
-		inventory.erase(inventory.begin()+k);}
+		if (inventory.size()==0) goto start;
+		if (wearThis(inventory[k])==0)
+		{
+		inventory.erase(inventory.begin()+k);
+		if (k==inventory.size()) k--;
+		}
 		else warning=1;
+		goto start;
+	}
+	else if (ch == 'x') //if we choose to expunge
+	{
+		//equipped.push_back(inventory[k]);
+		if (inventory.size()>0)
+		{
+			inventory.erase(inventory.begin()+k);
+			if (k==inventory.size())
+			{
+				k--;
+				if (k<0) k = 0;
+			}
+		}
+		goto start;
+	}
+	else if (ch == 'd') //if we choose to expunge
+	{
+		//equipped.push_back(inventory[k]);
+		player_node* temp;
+		if (inventory.size()>0)
+		for (i = 0; i < ylenMax; i++)
+		{
+			for (j = 0; j < xlenMax; j++)
+			{
+				if(grid_players[j][i]!=NULL)
+				{
+					if (grid_players[j][i]->ifPC)
+					{
+						if (grid_objects[j][i]==NULL)
+						{
+							if (inventory.size()>0)
+							{
+								grid_objects[j][i] = inventory[k];
+								object_death[inventory[k]->index] = 0;
+								inventory.erase(inventory.begin()+k);
+								if (k==inventory.size())
+								{
+									k--;
+									if (k<0) k = 0;
+								}
+
+							}
+						}
+						else
+						{
+							goto start;
+						}
+					}
+				}
+			}
+		}
 		goto start;
 	}
 
